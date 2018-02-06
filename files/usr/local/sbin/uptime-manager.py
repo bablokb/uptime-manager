@@ -150,19 +150,41 @@ def do_add(options):
   logger.msg("INFO","adding entry to the database")
   INSERT_STMT = 'INSERT INTO schedule VALUES (' + 5 * '?,' + '?)'
 
+  # check if input is on the commandline or from stdin
+  if options.args[0] == '-':
+    # read from stdin
+    for line in sys.stdin:
+      if line[0] == '#':
+        # ignore comments
+        continue
+      args = line.split()
+      do_add_sql(options,args[:5])  # strip of extra stuff (e.g. comments)
+    pass
+  else:
+    # use commandline arguments
+    do_add_sql(options,options.args)
+
+# --- add an uptime-entry to the database   ---------------------------------
+
+def do_add_sql(options,sql_args):
+  """ add an entry to the database """
+  logger.msg("DEBUG","adding entry to the database")
+  logger.msg("TRACE","sql_args: %r" % sql_args)
+  INSERT_STMT = 'INSERT INTO schedule VALUES (' + 5 * '?,' + '?)'
+
   # split interval
-  start,end = options.args[4].split("-")
+  start,end = sql_args[4].split("-")
   if len(start) == 5:
     start = "%s:00" % start
   if len(end) == 5:
     end   = "%s:00" % end
 
   # start of uptime-interval
-  args=(options.args[0],options.args[1],options.args[2],options.args[3],1,start)
+  args=(sql_args[0],sql_args[1],sql_args[2],sql_args[3],1,start)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
   # end of uptime-interval
-  args=(options.args[0],options.args[1],options.args[2],options.args[3],0,end)
+  args=(sql_args[0],sql_args[1],sql_args[2],sql_args[3],0,end)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
 # --- delete an uptime-entry to the database   ------------------------------
