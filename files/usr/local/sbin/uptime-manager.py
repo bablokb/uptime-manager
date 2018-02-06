@@ -38,7 +38,8 @@ class Msg(object):
     "DEBUG":1,
     "INFO":2,
     "WARN":3,
-    "ERROR":4
+    "ERROR":4,
+    "NONE":5
     }
   def __init__(self,level):
     self._level = level
@@ -238,7 +239,9 @@ Available commands:
     dest='quiet',
     help='output no messages')
   parser.add_argument('-l', '--level', dest='level', default='INFO',
-    help='log level')
+                      metavar='debug-level',
+                      choices=['NONE','ERROR','WARN','INFO','DEBUG','TRACE'],
+    help='debug level: one of NONE, ERROR, WARN, INFO, DEBUG, TRACE')
   parser.add_argument('--version', action='store_true',
     dest='do_version_info',
     help='print version info')
