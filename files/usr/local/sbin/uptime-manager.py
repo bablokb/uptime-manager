@@ -19,7 +19,7 @@ LIST_FORMAT = "{0:8} | {1:10} | {2:4} | {3:10} | {4:5d} | {5:8}"
 # --- system-imports   -----------------------------------------------------
 
 import argparse
-import sys, os, datetime, sqlite3
+import sys, os, datetime, sqlite3, locale
 
 # ---------------------------------------------------------------------------
 # --- helper-class for options   --------------------------------------------
@@ -224,6 +224,44 @@ def do_raw(options):
   for row in rows:
     print LIST_FORMAT.format(*row)
 
+# --- list uptimes for a given period   -------------------------------------
+
+def do_list(options):
+  """ list uptimes """
+
+  list_type = options.args[0] if len(options.args) else 'today'
+  logger.msg("INFO","listing uptimes for %s" % list_type)
+
+  if list_type == 'today':
+    list_uptimes(options,datetime.date.today())
+  elif list_type == 'week':
+    delta = datetime.timedelta(1)
+    day = datetime.date.today()
+    for _ in range(7):
+      list_uptimes(options,day)
+      day = day + delta
+    pass
+  else:
+    # list_type contains a date
+    length = len(list_type)
+    sep = list_type[2]
+    parts = list_type.split(sep)
+    list_type = "%s%s%s%s" % (parts[0],sep,parts[1],sep)
+    print list_type
+    if length == 8:
+      list_type = list_type + "20" + parts[2]
+    else:
+      list_type = list_type + parts[2]
+      print list_type
+    list_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
+    pass
+
+# --- list uptimes for a given date   ---------------------------------------
+
+def list_uptimes(options,date):
+  """ list uptimes for given date """
+  logger.msg("DEBUG","listing uptimes for %r" % date)
+
 # --- get next boot or halt time   ------------------------------------------
 
 def do_get(options):
@@ -280,6 +318,7 @@ Available commands:
 # --- main program   --------------------------------------------------------
 
 if __name__ == '__main__':
+  locale.setlocale(locale.LC_ALL, '')
 
   opt_parser = get_parser()
   options = opt_parser.parse_args(namespace=Options)
