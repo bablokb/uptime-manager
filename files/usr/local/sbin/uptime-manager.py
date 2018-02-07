@@ -233,12 +233,13 @@ def do_list(options):
   logger.msg("INFO","listing uptimes for %s" % list_type)
 
   if list_type == 'today':
-    fetch_uptimes(options,datetime.date.today())
+    rows = fetch_uptimes(options,datetime.date.today())
   elif list_type == 'week':
     delta = datetime.timedelta(1)
     day = datetime.date.today()
+    rows = []
     for _ in range(7):
-      fetch_uptimes(options,day)
+      rows.extend(fetch_uptimes(options,day))
       day = day + delta
   else:
     # list_type contains a date
@@ -252,7 +253,14 @@ def do_list(options):
     else:
       list_type = list_type + parts[2]
       print list_type
-    fetch_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
+    rows = fetch_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
+
+  # print results
+  if rows:
+    print LIST_HEADER
+    print LIST_SEP
+    for row in rows:
+      print LIST_FORMAT.format(*row)
 
 # --- list uptimes for a given date   ---------------------------------------
 
@@ -273,6 +281,7 @@ def fetch_uptimes(options,date):
   close_db(options)
   for row in rows:
     logger.msg("TRACE","%r" % (row,))
+  return rows
 
 # --- get next boot or halt time   ------------------------------------------
 
