@@ -12,9 +12,9 @@
 
 VERSION=1      # increase with incompatible changes
 
-LIST_HEADER = "Owner    | Label      | Type | Value      | State | Time"
-LIST_SEP    = "---------|------------|------|------------|-------|-----"
-LIST_FORMAT = "{0:8} | {1:10} | {2:4} | {3:10} | {4:5d} | {5:8}"
+LIST_HEADER = "Owner    | Label                | Type | Value      | State | Time"
+LIST_SEP    = "---------|----------------------|------|------------|-------|---------"
+LIST_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
 
 # --- system-imports   -----------------------------------------------------
 
