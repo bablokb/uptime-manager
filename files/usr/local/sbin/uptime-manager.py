@@ -233,12 +233,12 @@ def do_list(options):
   logger.msg("INFO","listing uptimes for %s" % list_type)
 
   if list_type == 'today':
-    list_uptimes(options,datetime.date.today())
+    fetch_uptimes(options,datetime.date.today())
   elif list_type == 'week':
     delta = datetime.timedelta(1)
     day = datetime.date.today()
     for _ in range(7):
-      list_uptimes(options,day)
+      fetch_uptimes(options,day)
       day = day + delta
   else:
     # list_type contains a date
@@ -252,13 +252,13 @@ def do_list(options):
     else:
       list_type = list_type + parts[2]
       print list_type
-    list_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
+    fetch_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
 
 # --- list uptimes for a given date   ---------------------------------------
 
-def list_uptimes(options,date):
-  """ list uptimes for given date """
-  logger.msg("DEBUG","listing uptimes for %r" % date)
+def fetch_uptimes(options,date):
+  """ fetch uptimes for given date """
+  logger.msg("DEBUG","fetching uptimes for %r" % date)
 
   # get entries in DB
   open_db(options)
