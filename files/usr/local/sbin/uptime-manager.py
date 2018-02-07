@@ -179,6 +179,14 @@ def do_add_sql(options,sql_args):
   if len(end) == 5:
     end   = "%s:00" % end
 
+  # convert date
+  if sql_args[2] == 'DATE':
+    sep = sql_args[3][2]
+    parts=sql_args[3].split(sep)
+    if len(parts[2]) == 2:
+      parts[2] = "20%s" % parts[2]
+    sql_args[3] = "%s-%s-%s" % (parts[2],parts[1],parts[0])
+
   # start of uptime-interval
   args=(sql_args[0],sql_args[1],sql_args[2],sql_args[3],1,start)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
