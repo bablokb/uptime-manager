@@ -74,7 +74,7 @@ def dom(date):
 
 # --- date of given date   --------------------------------------------------
 
-def date(date):
+def dates(date):
   """ return date of given date """
 
   return date.strftime("%Y-%m-%d")
@@ -240,7 +240,6 @@ def do_list(options):
     for _ in range(7):
       list_uptimes(options,day)
       day = day + delta
-    pass
   else:
     # list_type contains a date
     length = len(list_type)
@@ -254,13 +253,26 @@ def do_list(options):
       list_type = list_type + parts[2]
       print list_type
     list_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
-    pass
 
 # --- list uptimes for a given date   ---------------------------------------
 
 def list_uptimes(options,date):
   """ list uptimes for given date """
   logger.msg("DEBUG","listing uptimes for %r" % date)
+
+  # get entries in DB
+  open_db(options)
+  cursor = options.db.cursor()
+  cursor.execute("""
+     select * from schedule where
+      type = 'DOW'  AND value=?  OR
+      type = 'DOM'  AND value=?  OR
+      type = 'DATE' AND value=?
+         order by time, state desc""",(dow(date),dom(date),dates(date)))
+  rows = cursor.fetchall()
+  close_db(options)
+  for row in rows:
+    logger.msg("TRACE","%r" % (row,))
 
 # --- get next boot or halt time   ------------------------------------------
 
