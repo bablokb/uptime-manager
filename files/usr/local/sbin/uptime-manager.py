@@ -12,9 +12,14 @@
 
 VERSION=1      # increase with incompatible changes
 
+# list formatting
 LIST_HEADER = "Owner    | Label                | Type | Value      | State | Time"
 LIST_SEP    = "---------|----------------------|------|------------|-------|---------"
 LIST_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
+
+# tuple-index for rows retrieved
+I_STATE = 4
+I_TIME  = 5
 
 # --- system-imports   -----------------------------------------------------
 
@@ -296,7 +301,42 @@ def fetch_uptimes(options,date):
 def do_get(options):
   """ get next boot or halt time """
 
-  logger.msg("INFO","get next boot/halt time")
+  get_type = options.args[0] if len(options.args) else 'halt'
+  logger.msg("INFO","calculatingg next %s" % get_type)
+
+  # we might have to look into the future, so we iterate starting from today
+  delta = datetime.timedelta(1)
+  day = datetime.date.today()
+  now = datetime.datetime.now().time().strftime("%H:%M:%S")
+  logger.msg("TRACE","now: %s" % now)
+  uptimes = []
+  state = 0
+  logger.msg("TRACE","state: %d" % state)
+
+  #while True:
+  for i in range(7):
+    rows = fetch_uptimes(options,day)
+    for row in rows:
+      # aggregate uptime-requests
+      if row[I_STATE] == 1:
+        state += 1
+      else:
+        state = max(state-1,0)
+      logger.msg("TRACE","state: %d" % state)
+
+      # next halt is when we reach zero
+      logger.msg("TRACE","time: %s" % row[I_TIME])
+      if (get_type == 'halt' and state == 0 and now < row[I_TIME]):
+        print  day, row[I_TIME]
+        return (day,row[I_TIME])
+      # next boot is transition from 0 to 1
+      elif (get_type == 'boot' and state == 1 and row[I_STATE] == 1 and
+                                                           now < row[I_TIME]):
+        print  day, row[I_TIME]
+        return (day,row[I_TIME])
+    # at this stage we have to peek into the next day
+    now = "00:00:00"
+    day = day + delta
 
 # --- activate next shutdown   ----------------------------------------------
 
