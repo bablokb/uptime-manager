@@ -164,7 +164,6 @@ def do_add(options):
         continue
       args = line.split()
       do_add_sql(options,args[:5])  # strip of extra stuff (e.g. comments)
-    pass
   else:
     # use commandline arguments
     do_add_sql(options,options.args)
