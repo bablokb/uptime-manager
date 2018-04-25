@@ -152,11 +152,10 @@ def do_create(options):
 
 def do_add(options):
   """ add an entry to the database """
-  logger.msg("INFO","adding entry to the database")
-  INSERT_STMT = 'INSERT INTO schedule VALUES (' + 5 * '?,' + '?)'
 
   # check if input is on the commandline or from stdin
   if options.args[0] == '-':
+    logger.msg("INFO","add: parsing new entries from stdin")
     # read from stdin
     for line in sys.stdin:
       if line[0] == '#':
@@ -166,6 +165,7 @@ def do_add(options):
       do_add_sql(options,args[:5])  # strip of extra stuff (e.g. comments)
   else:
     # use commandline arguments
+    logger.msg("INFO","add: parsing new entries from the commandline")
     do_add_sql(options,options.args)
 
 # --- add an uptime-entry to the database   ---------------------------------
