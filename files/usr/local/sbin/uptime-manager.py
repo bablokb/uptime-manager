@@ -116,6 +116,7 @@ def exec_sql(options,statement,args=(),commit=False):
   """ execute an sql-statement """
 
   logger.msg("DEBUG","executing: %s" % statement)
+  logger.msg("DEBUG","args: %r" % (args,))
   try:
     open_db(options)
     cursor = options.db.cursor()
@@ -184,20 +185,53 @@ def do_add_sql(options,sql_args):
     end   = "%s:00" % end
 
   # convert date
-  if sql_args[2] == 'DATE':
+  dtype = sql_args[2]
+  if dtype == 'DATE':
     sep = sql_args[3][2]
     parts=sql_args[3].split(sep)
     if len(parts[2]) == 2:
       parts[2] = "20%s" % parts[2]
-    sql_args[3] = "%s-%s-%s" % (parts[2],parts[1],parts[0])
+    value = "%s-%s-%s" % (parts[2],parts[1],parts[0])
+  else:
+    value = sql_args[3]
+
+  # check if time-span overlapps midnight. Split if necessary
+  if end < start:
+    start2 = '00:00:00'
+    end2   = end
+    end    = '23:59:59'
+    value2 = next_day(dtype,value)  # next value of given dtype
+  else:
+    start2 = None
 
   # start of uptime-interval
-  args=(sql_args[0],sql_args[1],sql_args[2],sql_args[3],1,start)
+  args=(sql_args[0],sql_args[1],dtype,value,1,start)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
   # end of uptime-interval
-  args=(sql_args[0],sql_args[1],sql_args[2],sql_args[3],0,end)
+  args=(sql_args[0],sql_args[1],dtype,value,0,end)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
+
+  # add second interval if necessary
+  if start2:
+    args=(sql_args[0],sql_args[1],dtype,value2,1,start2)
+    exec_sql(options,INSERT_STMT,args=args,commit=True)
+    args=(sql_args[0],sql_args[1],dtype,value2,0,end2)
+    exec_sql(options,INSERT_STMT,args=args,commit=True)
+
+# --- get next day of given dtype   -----------------------------------------
+
+def next_day(dtype,value):
+  """ value of next day, either a weekday name or a date """
+
+  if dtype == 'DOW':
+    return value % 7 + 1
+  elif dtype == 'DOM':
+    return value % 31 + 1
+  else:
+    value  = datetime.datetime.strptime(value,"%Y-%m-%d")
+    value += datetime.timedelta(1)
+    return   datetime.datetime.strftime(value,"%Y-%m-%d")
 
 # --- delete an uptime-entry to the database   ------------------------------
 
