@@ -10,12 +10,19 @@
 #
 # --------------------------------------------------------------------------
 
-VERSION=1      # increase with incompatible changes
+VERSION=1             # increase with incompatible changes
+
+TIME_HORIZON =  7     # we peek at most 30 days into the future
+TIME_DELTA   = 10     # we consolidate uptimes/downtimes shorter than 10 minutes
 
 # list formatting
 LIST_HEADER = "Owner    | Label                | Type | Value      | State | Time"
 LIST_SEP    = "---------|----------------------|------|------------|-------|---------"
 LIST_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
+
+STATE_HEADER = "Date       |Time      | State"
+STATE_SEP    = "-----------|----------|------"
+STATE_FORMAT = "{0:10} | {1:8} | {2:1}"
 
 # tuple-index for rows retrieved
 I_STATE = 4
@@ -52,7 +59,7 @@ class Msg(object):
   # --- print a message   ---------------------------------------------------
   
   def msg(self,msg_level,text,nl=True):
-    """Ausgabe einer Meldung"""
+    """ print message """
     if Msg.MSG_LEVELS[msg_level] >= Msg.MSG_LEVELS[self._level]:
       if nl:
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -60,6 +67,12 @@ class Msg(object):
       else:
         sys.stderr.write(text)
         sys.stderr.flush()
+
+  # --- check level   -------------------------------------------------------
+
+  def is_level(self,msg_level):
+    """ return True if msg_level is at least self._level """
+    return Msg.MSG_LEVELS[msg_level] >= Msg.MSG_LEVELS[self._level]
 
 # ---------------------------------------------------------------------------
 
@@ -77,12 +90,26 @@ def dom(date):
 
   return date.day
 
-# --- date of given date   --------------------------------------------------
+# --- convert date to sql-date   --------------------------------------------
 
-def dates(date):
-  """ return date of given date """
+def date2sql(date):
+  """ return sql-date of given date """
 
   return date.strftime("%Y-%m-%d")
+
+# --- convert sql-date to date   --------------------------------------------
+
+def sql2date(date):
+  """ return date of given sql-date """
+
+  return date.strptime(date,"%Y-%m-%d")
+
+# --- convert sql-date and time to datetime   ------------------------------
+
+def sql2datetime(date,time):
+  """ return date of given sql-date """
+
+  return datetime.datetime.strptime("%s %s" % (date,time), "%Y-%m-%d %H:%M:%S")
 
 # --- open database   -------------------------------------------------------
 
@@ -229,9 +256,9 @@ def next_day(dtype,value):
   elif dtype == 'DOM':
     return value % 31 + 1
   else:
-    value  = datetime.datetime.strptime(value,"%Y-%m-%d")
+    value  = sql2date(value)
     value += datetime.timedelta(1)
-    return   datetime.datetime.strftime(value,"%Y-%m-%d")
+    return   date2sql(value)
 
 # --- delete an uptime-entry to the database   ------------------------------
 
@@ -322,7 +349,7 @@ def fetch_uptimes(options,date):
       type = 'DOW'  AND value=?  OR
       type = 'DOM'  AND value=?  OR
       type = 'DATE' AND value=?
-         order by time, state desc""",(dow(date),dom(date),dates(date)))
+         order by time, state desc""",(dow(date),dom(date),date2sql(date)))
   rows = cursor.fetchall()
   close_db(options)
   for row in rows:
@@ -336,18 +363,38 @@ def do_get(options):
 
   get_type = options.args[0] if len(options.args) else 'halt'
   logger.msg("INFO","calculatingg next %s" % get_type)
+  today = date2sql(datetime.date.today())
+  now   = datetime.datetime.now().time().strftime("%H:%M:%S")
+  logger.msg("TRACE","now: %s" % now)
+
+  states = consolidate_uptimes(options)
+  for (day,time,state) in states:
+    if day > today:
+      now = "00:00:00"
+    if get_type == "boot" and state == 0:
+      continue
+    elif get_type == "halt" and state == 1:
+      continue
+    elif now <= time:
+      print "%s %s" % (day,time)
+      return
+
+# --- consolidate uptimes   --------------------------------------------------
+
+def consolidate_uptimes(options):
+  """ consolidate uptime """
 
   # we might have to look into the future, so we iterate starting from today
   delta = datetime.timedelta(1)
   day = datetime.date.today()
-  now = datetime.datetime.now().time().strftime("%H:%M:%S")
-  logger.msg("TRACE","now: %s" % now)
-  uptimes = []
+
+  state_changes = []
   state = 0
   logger.msg("TRACE","state: %d" % state)
 
-  #while True:
-  for i in range(7):
+  # we first aggregate all uptime periods
+  for i in range(TIME_HORIZON):
+    logger.msg("TRACE","examining day %s" % date2sql(day))
     rows = fetch_uptimes(options,day)
     for row in rows:
       # aggregate uptime-requests
@@ -359,17 +406,51 @@ def do_get(options):
 
       # next halt is when we reach zero
       logger.msg("TRACE","time: %s" % row[I_TIME])
-      if (get_type == 'halt' and state == 0 and now < row[I_TIME]):
-        print  day, row[I_TIME]
-        return (day,row[I_TIME])
+      if (state == 0):
+        state_changes.append((date2sql(day),row[I_TIME],state))
       # next boot is transition from 0 to 1
-      elif (get_type == 'boot' and state == 1 and row[I_STATE] == 1 and
-                                                           now < row[I_TIME]):
-        print  day, row[I_TIME]
-        return (day,row[I_TIME])
+      elif (state == 1 and row[I_STATE] == 1):
+        state_changes.append((date2sql(day),row[I_TIME],state))
     # at this stage we have to peek into the next day
-    now = "00:00:00"
     day = day + delta
+
+  # for debug-purposes, print list
+  if logger.is_level("DEBUG"):
+    logger.msg("DEBUG","state-changes before consolidation: %d" % len(state_changes))
+    if state_changes:
+      print STATE_HEADER
+      print STATE_SEP
+      for row in state_changes:
+        print STATE_FORMAT.format(*row)
+
+  # now we consolidate the periods
+  delta = datetime.timedelta(minutes=TIME_DELTA)
+  i = 0
+  while True and len(state_changes):
+    if i == len(state_changes)-1:
+      break
+    (day_c,time_c,state_c) = state_changes[i]
+    (day_n,time_n,state_n) = state_changes[i+1]
+    dt_c = sql2datetime(day_c,time_c)
+    dt_n = sql2datetime(day_n,time_n)
+    if (dt_c + delta >= dt_n):
+      logger.msg("TRACE","deleting %r" % (state_changes[i],))
+      del state_changes[i]
+      logger.msg("TRACE","deleting %r" % (state_changes[i],))
+      del state_changes[i]
+    else:
+      i += 1
+
+  # for debug-purposes, print list
+  if logger.is_level("DEBUG"):
+    logger.msg("DEBUG","state-changes after consolidation: %d" % len(state_changes))
+    if state_changes:
+      print STATE_HEADER
+      print STATE_SEP
+      for row in state_changes:
+        print STATE_FORMAT.format(*row)
+
+  return state_changes
 
 # --- activate next shutdown   ----------------------------------------------
 
