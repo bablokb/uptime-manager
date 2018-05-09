@@ -381,7 +381,11 @@ def do_get(options):
   now   = datetime.datetime.now().time().strftime("%H:%M:%S")
   logger.msg("TRACE","now: %s" % now)
 
-  states = consolidate_uptimes(options)
+  states = consolidate_uptimes(options,raw=get_type=='raw')
+  if get_type in ['raw','all']:
+    print_results(states,True)
+    return
+
   for (day,time,state) in states:
     if day > today:
       now = "00:00:00"
@@ -395,7 +399,7 @@ def do_get(options):
 
 # --- consolidate uptimes   --------------------------------------------------
 
-def consolidate_uptimes(options):
+def consolidate_uptimes(options,raw=False):
   """ consolidate uptime """
 
   # we might have to look into the future, so we iterate starting from today
@@ -432,6 +436,10 @@ def consolidate_uptimes(options):
   if logger.is_level("DEBUG"):
     logger.msg("DEBUG","state-changes before consolidation: %d" % len(result))
     print_results(result,True)
+
+  # finish here, if raw values were requested
+  if raw:
+    return result
 
   # now we consolidate the periods
   delta = datetime.timedelta(minutes=TIME_DELTA)
@@ -479,8 +487,8 @@ Available commands:
   add owner label DOW|DOM|DATE value start-end: add uptime period
   del owner [label]: delete all entries for owner or owner/label
   raw: list database (raw mode)
-  list [today|week|<date>]: list consolidated uptimes
-  get halt|boot: get next halt-time/boot-time
+  list [today|week|<date>]: list all uptimes (unconsolidated)
+  get halt|boot|all|raw: get (next) halt-time/boot-time
   act: schedule shutdown for next halt-time
   """)
   parser.add_argument('-D', '--db', metavar=('database',), required=True,
