@@ -16,18 +16,18 @@ TIME_HORIZON =  7     # we peek at most 30 days into the future
 TIME_DELTA   = 10     # we consolidate uptimes/downtimes shorter than 10 minutes
 
 # list formatting
-LIST_HEADER = "Owner    | Label                | Type | Value      | State | Time"
-LIST_SEP    = "---------|----------------------|------|------------|-------|---------"
-LIST_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
+LIST_HEADER = "Date       |Time      |Owner    | Label                | Type | Value      | State |"
+LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
+LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5d} |"
 
 STATE_HEADER = "Date       |Time      | State"
 STATE_SEP    = "-----------|----------|------"
 STATE_FORMAT = "{0:10} | {1:8} | {2:1}"
 
 # tuple-index for rows retrieved
-I_STATE = 4
-I_TIME  = 5
-I_DATE  = 7
+I_STATE = 5
+I_TIME  = 6
+I_DATE  = 0
 
 # --- system-imports   -----------------------------------------------------
 
@@ -358,7 +358,7 @@ def fetch_uptimes(options,date):
   open_db(options)
   cursor = options.db.cursor()
   cursor.execute("""
-     select *,%s from schedule where
+     select '%s',* from schedule where
       type = 'DOW'  AND value=?  OR
       type = 'DOM'  AND value=?  OR
       type = 'DATE' AND value=?
