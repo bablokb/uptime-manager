@@ -12,7 +12,7 @@
 
 VERSION=1             # increase with incompatible changes
 
-TIME_HORIZON =  7     # we peek at most 30 days into the future
+TIME_HORIZON =  7     # we peek at most 7 days into the future
 TIME_DELTA   = 10     # we consolidate uptimes/downtimes shorter than 10 minutes
 
 # list formatting
@@ -184,7 +184,16 @@ def do_create(options):
 # --- add an uptime-entry to the database   ---------------------------------
 
 def do_add(options):
-  """ add an entry to the database """
+  """ add an entry to the database
+
+      format of the arguments:
+        owner label type value start-end
+
+      type is one of DOW/DOM/DATE
+
+      DOW = Day-of-Week:  1-7 Monday-Sunday
+      DOM = Day-of-Month: 1-31
+  """
 
   # check if input is on the commandline or from stdin
   if options.args[0] == '-':
