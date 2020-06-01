@@ -18,7 +18,7 @@ TIME_DELTA   = 10     # we consolidate uptimes/downtimes shorter than 10 minutes
 # list formatting
 LIST_HEADER = "Date       |Time      |Owner    | Label                | Type | Value      | State |"
 LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
-LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5d} |"
+LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} |"
 
 RAW_HEADER = "Owner    | Label                | Type | Value      | State | Time"
 RAW_SEP    = "---------|----------------------|------|------------|-------|---------"
@@ -26,12 +26,16 @@ RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
 
 STATE_HEADER = "Date       |Time      | State"
 STATE_SEP    = "-----------|----------|------"
-STATE_FORMAT = "{0:10} | {1:8} | {2:1}"
+STATE_FORMAT = "{0:10} | {1:8} | {2:4}"
 
 # tuple-index for rows retrieved
-I_STATE = 5
+STATE_INDEX   = 5
+STATE_INDEX_S = 2
 I_TIME  = 6
 I_DATE  = 0
+
+# state text
+STATE_VALUES = ['down','up']
 
 # --- system-imports   -----------------------------------------------------
 
@@ -283,12 +287,16 @@ def print_results(rows,state=False):
       print(STATE_HEADER)
       print(STATE_SEP)
       for row in rows:
+        row = list(row)
+        row[STATE_INDEX_S] = STATE_VALUES[row[STATE_INDEX_S]]
         print(STATE_FORMAT.format(*row))
   else:
     if rows:
       print(LIST_HEADER)
       print(LIST_SEP)
       for row in rows:
+        row = list(row)
+        row[STATE_INDEX] = STATE_VALUES[row[STATE_INDEX]]
         print(LIST_FORMAT.format(*row))
 
 # --- delete an uptime-entry to the database   ------------------------------
@@ -434,7 +442,7 @@ def consolidate_uptimes(options,raw=False):
     rows = fetch_uptimes(options,day)
     for row in rows:
       # aggregate uptime-requests
-      if row[I_STATE] == 1:
+      if row[STATE_INDEX] == 1:
         state += 1
       else:
         state = max(state-1,0)
@@ -445,7 +453,7 @@ def consolidate_uptimes(options,raw=False):
       if (state == 0):
         result.append((date2sql(day),row[I_TIME],state))
       # next boot is transition from 0 to 1
-      elif (state == 1 and row[I_STATE] == 1):
+      elif (state == 1 and row[STATE_INDEX] == 1):
         result.append((date2sql(day),row[I_TIME],state))
     # at this stage we have to peek into the next day
     day = day + delta
