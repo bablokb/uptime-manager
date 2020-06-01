@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------
 # Uptime-Manager: keep a table of required uptimes of a computer
@@ -271,16 +271,16 @@ def print_results(rows,state=False):
   """ pretty-print results """
   if state:
     if rows:
-      print STATE_HEADER
-      print STATE_SEP
+      print(STATE_HEADER)
+      print(STATE_SEP)
       for row in rows:
-        print STATE_FORMAT.format(*row)
+        print(STATE_FORMAT.format(*row))
   else:
     if rows:
-      print LIST_HEADER
-      print LIST_SEP
+      print(LIST_HEADER)
+      print(LIST_SEP)
       for row in rows:
-        print LIST_FORMAT.format(*row)
+        print(LIST_FORMAT.format(*row))
 
 # --- delete an uptime-entry to the database   ------------------------------
 
@@ -314,10 +314,10 @@ def do_raw(options):
   close_db(options)
 
   # print results
-  print RAW_HEADER
-  print RAW_SEP
+  print(RAW_HEADER)
+  print(RAW_SEP)
   for row in rows:
-    print RAW_FORMAT.format(*row)
+    print(RAW_FORMAT.format(*row))
 
 # --- list uptimes for a given period   -------------------------------------
 
@@ -342,7 +342,7 @@ def do_list(options):
     sep = list_type[2]
     parts = list_type.split(sep)
     list_type = "%s%s%s%s" % (parts[0],sep,parts[1],sep)
-    print list_type
+    print(list_type)
     if length == 8:
       list_type = list_type + "20" + parts[2]
     else:
@@ -399,7 +399,7 @@ def do_get(options):
       continue
     elif now <= time:
       if options.cmd == 'get':
-        print "%s %s" % (day,time)
+        print("%s %s" % (day,time))
       else:
         return "%s %s" % (day,time)
       return
