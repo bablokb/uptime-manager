@@ -20,6 +20,10 @@ LIST_HEADER = "Date       |Time      |Owner    | Label                | Type | V
 LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
 LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5d} |"
 
+RAW_HEADER = "Owner    | Label                | Type | Value      | State | Time"
+RAW_SEP    = "---------|----------------------|------|------------|-------|---------"
+RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
+
 STATE_HEADER = "Date       |Time      | State"
 STATE_SEP    = "-----------|----------|------"
 STATE_FORMAT = "{0:10} | {1:8} | {2:1}"
@@ -310,10 +314,10 @@ def do_raw(options):
   close_db(options)
 
   # print results
-  print LIST_HEADER
-  print LIST_SEP
+  print RAW_HEADER
+  print RAW_SEP
   for row in rows:
-    print LIST_FORMAT.format(*row)
+    print RAW_FORMAT.format(*row)
 
 # --- list uptimes for a given period   -------------------------------------
 
@@ -384,7 +388,7 @@ def do_get(options):
   states = consolidate_uptimes(options,raw=get_type=='raw')
   if get_type in ['raw','all']:
     print_results(states,True)
-    return
+    return ""
 
   for (day,time,state) in states:
     if day > today:
@@ -394,8 +398,13 @@ def do_get(options):
     elif get_type == "halt" and state == 1:
       continue
     elif now <= time:
-      print "%s %s" % (day,time)
+      if options.cmd == 'get':
+        print "%s %s" % (day,time)
+      else:
+        return "%s %s" % (day,time)
       return
+
+  return ""
 
 # --- consolidate uptimes   --------------------------------------------------
 
@@ -468,13 +477,6 @@ def consolidate_uptimes(options,raw=False):
 
   return result
 
-# --- activate next shutdown   ----------------------------------------------
-
-def do_act(options):
-  """ activate next shutdown """
-
-  logger.msg("INFO","activating next shutdown")
-
 # --- commandline parser   --------------------------------------------------
 
 def get_parser():
@@ -489,7 +491,6 @@ Available commands:
   raw: list database (raw mode)
   list [today|week|<date>]: list all uptimes (unconsolidated)
   get halt|boot|all|raw: get (next) halt-time/boot-time
-  act: schedule shutdown for next halt-time
   """)
   parser.add_argument('-D', '--db', metavar=('database',), required=True,
     dest='db_name', help='database-file')
@@ -508,7 +509,7 @@ Available commands:
     help='print this help')
 
   parser.add_argument('cmd',
-                      choices=['create','add','del','raw','list','get','act'],
+                      choices=['create','add','del','raw','list','get'],
                       help='command to execute')
   parser.add_argument('args', nargs='*', metavar='argument',
     help='arguments for given command')
