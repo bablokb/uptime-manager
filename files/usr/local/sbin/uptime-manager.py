@@ -431,6 +431,23 @@ def do_get(options):
 
   return ""
 
+# --- set next halt|boot time   ---------------------------------------------
+
+def do_set(options):
+  """ set next boot or halt time """
+
+  if len(options.args) != 1:
+    print("the set command needs a single option halt|boot")
+    return
+
+  set_type = options.args[0]
+  if set_type not in ['halt','boot']:
+    print("the set command needs a single option halt|boot")
+    return
+
+  logger.msg("INFO","setting next %s" % set_type)
+  os.system("um_set_%s &" % set_type)
+
 # --- consolidate uptimes   --------------------------------------------------
 
 def consolidate_uptimes(options,raw=False):
@@ -510,12 +527,13 @@ def get_parser():
     description='uptime-manager: manage uptimes of a system',
     epilog="""
 Available commands:
-  create: (re-) create the database
+  create:                                       (re-) create the database
   add owner label DOW|DOM|DATE value start-end: add uptime period
-  del owner [label]: delete all entries for owner or owner/label
-  raw: list database (raw mode)
-  list [today|week|<date>]: list all uptimes (unconsolidated)
-  get halt|boot|all|raw: get (next) halt-time/boot-time
+  del owner [label]:                            delete all entries for owner or owner/label
+  raw:                                          list database (raw mode)
+  list [today|week|<date>]:                     list all uptimes (unconsolidated)
+  get halt|boot|all|raw:                        get (next) halt-time/boot-time
+  set halt|boot:                                set next halt-time|boot-time (call um_set_halt|um_set_boot)
   """)
   parser.add_argument('-D', '--db', metavar=('database',), required=True,
     dest='db_name', help='database-file')
@@ -534,7 +552,7 @@ Available commands:
     help='print this help')
 
   parser.add_argument('cmd',
-                      choices=['create','add','del','raw','list','get'],
+                      choices=['create','add','del','raw','list','get','set'],
                       help='command to execute')
   parser.add_argument('args', nargs='*', metavar='argument',
     help='arguments for given command')
