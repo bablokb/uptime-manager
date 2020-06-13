@@ -20,9 +20,9 @@ LIST_HEADER = "Date       |Time      |Owner    | Label                | Type | V
 LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
 LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} |"
 
-RAW_HEADER = "Owner    | Label                | Type | Value      | State | Time"
-RAW_SEP    = "---------|----------------------|------|------------|-------|---------"
-RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8}"
+RAW_HEADER = "Owner    | Label                | Type | Value      | State | Time     | id"
+RAW_SEP    = "---------|----------------------|------|------------|-------|----------|---------------------"
+RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8} | {6:20d}"
 
 STATE_HEADER = "Date       |Time      | State"
 STATE_SEP    = "-----------|----------|------"
@@ -165,7 +165,6 @@ def exec_sql(options,statement,args=(),commit=False):
   except Exception as e:
     logger.msg("ERROR","Exception: %s" % e)
 
-
 # --- create the database   -------------------------------------------------
 
 def do_create(options):
@@ -182,7 +181,8 @@ def do_create(options):
        type  text,
        value text,
        state integer,
-       time  text)""")
+       time  text,
+       id integer)""")
   close_db(options)
 
 # --- add an uptime-entry to the database   ---------------------------------
@@ -207,8 +207,8 @@ def do_add(options):
       if line[0] == '#':
         # ignore comments
         continue
-      args = line.split()
-      do_add_sql(options,args[:5])  # strip of extra stuff (e.g. comments)
+      args = line.split()[:5]     # strip of extra stuff (e.g. comments)
+      do_add_sql(options,args)
   else:
     # use commandline arguments
     logger.msg("INFO","add: parsing new entries from the commandline")
@@ -219,8 +219,13 @@ def do_add(options):
 def do_add_sql(options,sql_args):
   """ add an entry to the database """
   logger.msg("DEBUG","adding entry to the database")
+
+  # calculate id of arguments
+  id = hash(''.join(sql_args))
+
   logger.msg("TRACE","sql_args: %r" % sql_args)
-  INSERT_STMT = 'INSERT INTO schedule VALUES (' + 5 * '?,' + '?)'
+  PRE_INSERT_STMT = 'DELETE FROM schedule where id=?'
+  INSERT_STMT     = 'INSERT INTO schedule VALUES (' + 6 * '?,' + '?)'
 
   # split interval
   start,end = sql_args[4].split("-")
@@ -249,19 +254,22 @@ def do_add_sql(options,sql_args):
   else:
     start2 = None
 
+  # remove old entries with given id
+  exec_sql(options,PRE_INSERT_STMT,args=(id,),commit=True)
+
   # start of uptime-interval
-  args=(sql_args[0],sql_args[1],dtype,value,1,start)
+  args=(sql_args[0],sql_args[1],dtype,value,1,start,id)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
   # end of uptime-interval
-  args=(sql_args[0],sql_args[1],dtype,value,0,end)
+  args=(sql_args[0],sql_args[1],dtype,value,0,end,id)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
   # add second interval if necessary
   if start2:
-    args=(sql_args[0],sql_args[1],dtype,value2,1,start2)
+    args=(sql_args[0],sql_args[1],dtype,value2,1,start2,id)
     exec_sql(options,INSERT_STMT,args=args,commit=True)
-    args=(sql_args[0],sql_args[1],dtype,value2,0,end2)
+    args=(sql_args[0],sql_args[1],dtype,value2,0,end2,id)
     exec_sql(options,INSERT_STMT,args=args,commit=True)
 
 # --- get next day of given dtype   -----------------------------------------
