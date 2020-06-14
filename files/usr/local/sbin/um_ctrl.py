@@ -434,7 +434,12 @@ def do_get(options):
 # --- set next halt|boot time   ---------------------------------------------
 
 def do_set(options):
-  """ set next boot or halt time """
+  """ set next boot or halt time
+      This method will call um_set_boot/um_set_halt and pass three values:
+        - action-time as %Y-%m-%d %H:%M:%S
+        - action-time as %s (unix-timestamp aka seconds since epoch)
+        - time in seconds until action-time
+  """
 
   if len(options.args) != 1:
     print("the set command needs a single option halt|boot")
@@ -445,8 +450,14 @@ def do_set(options):
     print("the set command needs a single option halt|boot")
     return
 
-  logger.msg("INFO","setting next %s" % set_type)
-  os.system("um_set_%s &" % set_type)
+  t_action  = do_get(options)
+  dt_action = datetime.datetime.strptime(t_action,"%Y-%m-%d %H:%M:%S")
+  dt_now    = datetime.datetime.now()
+  delta     = dt_action - dt_now
+  logger.msg("INFO","setting next %s at %s" % (set_type,t_action))
+  hook = os.path.join(options.pgmdir,"um_set_%s" % set_type)
+  os.system("%s \"%s\" %d %d &" %
+            (hook,t_action,dt_action.timestamp(),delta.total_seconds()))
 
 # --- consolidate uptimes   --------------------------------------------------
 
@@ -568,6 +579,8 @@ if __name__ == '__main__':
   if options.do_version_info:
     print("version: %s" % VERSION)
     sys.exit(0)
+  else:
+    options.pgmdir = os.path.dirname(sys.argv[0])
 
   # configure message-class
   logger = Msg(options.level)
