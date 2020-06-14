@@ -1,0 +1,26 @@
+#!/bin/bash
+# --------------------------------------------------------------------------
+# Uptime-Manager: default implementation of um_set_boot
+#
+# This script will try to write the next boot-time to
+#   /sys/class/rtc/rtc0/wakealarm
+# if the file exists.
+# 
+# Author: Bernhard Bablok
+# License: GPL3
+#
+# Website: https://github.com/bablokb/uptime-manager
+#
+# --------------------------------------------------------------------------
+
+if [ "$UID" != 0 ]; then
+  # test-mode
+  echo "boot-time:           $1"
+  echo "boot-time (seconds): ${2%.*}"
+  echo "seconds until boot:  $3"
+else
+  # production-mode
+  if [ -f /sys/class/rtc/rtc0/wakealarm ]; then
+    echo "${2%.*}" > /sys/class/rtc/rtc0/wakealarm
+  fi
+fi

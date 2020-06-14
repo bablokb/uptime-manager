@@ -1,0 +1,25 @@
+#!/bin/bash
+# --------------------------------------------------------------------------
+# Uptime-Manager: default implementation of um_set_halt
+#
+# This script will
+#   - schedule a shutdown if seconds until halt are < 600 (10 minutes)
+#   - reschedule "um_ctrl.py set halt" otherwise
+# 
+# Author: Bernhard Bablok
+# License: GPL3
+#
+# Website: https://github.com/bablokb/uptime-manager
+#
+# --------------------------------------------------------------------------
+
+if [ "$UID" != 0 ]; then
+  # test-mode
+  echo "halt-time:           $1"
+  echo "halt-time (seconds): ${2%.*}"
+  echo "seconds until halt:  $3"
+else
+  # production-mode
+  # TODO: implement
+  :
+fi
