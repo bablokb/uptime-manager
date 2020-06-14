@@ -1,0 +1,24 @@
+# --------------------------------------------------------------------------
+# Systemd service Definition for uptime-manager.service.
+#
+# Set the next halt at boot and the next boot-time at shutdown.
+#
+# Author: Bernhard Bablok
+# License: GPL3
+#
+# Website: https://github.com/bablokb/uptime-manager
+#
+# --------------------------------------------------------------------------
+
+[Unit]
+Description=Uptime-Manager
+After=multi-user.target
+ 
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/local/sbin/um_ctrl.py set halt
+ExecStop=/usr/local/sbin/um_ctrl.py set boot
+
+[Install]
+WantedBy=multi-user.target
