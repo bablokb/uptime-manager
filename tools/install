@@ -56,14 +56,6 @@ install_packages() {
 install_files() {
   echo -e "[INFO] installing project files" 2>&1
 
-  rand="$RANDOM"
-  if [ -f "/usr/local/sbin/um_set_boot" ]; then
-    cp -a /usr/local/sbin/um_set_boot "/usr/local/sbin/um_set_boot.$rand"
-  fi
-  if [ -f "/usr/local/sbin/um_set_halt" ]; then
-    cp -a /usr/local/sbin/um_set_halt "/usr/local/sbin/um_set_halt.$rand"
-  fi
-
   for f in `find $(dirname "$0")/../files/ -type f -not -name "*.pyc"`; do
     target="${f#*files}"
     target_dir="${target%/*}"
@@ -72,13 +64,6 @@ install_files() {
     chown root:root "$target"
   done
   chmod 755 /usr/local/sbin/um*
-
-  if [ -f "/usr/local/sbin/um_set_boot.$rand" ]; then
-    mv -f "/usr/local/sbin/um_set_boot.$rand" /usr/local/sbin/um_set_boot
-  fi
-  if [ -f "/usr/local/sbin/um_set_halt.$rand" ]; then
-    mv -f "/usr/local/sbin/um_set_halt.$rand" /usr/local/sbin/um_set_halt
-  fi
 }
 
 # --- configure system   ----------------------------------------------------
