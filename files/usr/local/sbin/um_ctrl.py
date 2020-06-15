@@ -13,7 +13,6 @@
 VERSION=1             # increase with incompatible changes
 
 TIME_HORIZON =  7     # we peek at most 7 days into the future
-TIME_DELTA   = 10     # we consolidate uptimes/downtimes shorter than 10 minutes
 
 # list formatting
 LIST_HEADER = "Date       |Time      |Owner    | Label                | Type | Value      | State |"
@@ -490,10 +489,9 @@ def consolidate_uptimes(options,raw=False):
         state += 1
       else:
         state = max(state-1,0)
-      logger.msg("TRACE","state: %d" % state)
+      logger.msg("TRACE","time: %s, state: %d" % (row[I_TIME],state))
 
       # next halt is when we reach zero
-      logger.msg("TRACE","time: %s" % row[I_TIME])
       if (state == 0):
         result.append((date2sql(day),row[I_TIME],state))
       # next boot is transition from 0 to 1
@@ -515,21 +513,24 @@ def consolidate_uptimes(options,raw=False):
   delta = datetime.timedelta(minutes=options.min_downtime)
   i = 0
   while True and len(result):
-    if i == len(result)-1:
+    if i >= len(result)-1:
       break
     (day_c,time_c,state_c) = result[i]
+    if state_c:
+      # never remove an up-event
+      i += 1
+      continue
     (day_n,time_n,state_n) = result[i+1]
     dt_c = sql2datetime(day_c,time_c)
     dt_n = sql2datetime(day_n,time_n)
-    if (dt_c + delta >= dt_n):
+    if (dt_c + delta > dt_n):
       logger.msg("TRACE","deleting %r" % (result[i],))
-      del result[i]
+      del result[i]    # deletes current down
       logger.msg("TRACE","deleting %r" % (result[i],))
-      del result[i]
-      if i > 0:
-        i -= 1
+      del result[i]    # deletes next up
     else:
-      i += 1
+      # skip to next down
+      i += 2
 
   # for debug-purposes, print list
   if logger.is_level("DEBUG"):
