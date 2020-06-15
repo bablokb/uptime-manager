@@ -26,6 +26,13 @@ if [ "$UID" != 0 ]; then
   echo "seconds until halt:  $3"
 else
   # production-mode
-  # TODO: implement
-  :
+  systemctl stop um_set_halt.timer  # remove existing timer (if active)
+  if [ "${2%.*}" -lt 600 ]; then
+    # schedule shutdown
+    systemd-run --on-calendar="$1" --unit=um_set_halt /sbin/halt -p
+  else
+    # reschedule set halt (in case something changed)
+    systemd-run --on-calendar="$1" --unit=um_set_halt \
+                                               "${0%%/*}/um_ctrl.py" set halt
+  fi
 fi
