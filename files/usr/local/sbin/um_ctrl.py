@@ -40,7 +40,7 @@ STATE_VALUES = ['down','up']
 # --- system-imports   -----------------------------------------------------
 
 import argparse
-import sys, os, datetime, sqlite3, locale
+import sys, os, datetime, sqlite3, locale, json
 
 # ---------------------------------------------------------------------------
 # --- helper-class for options   --------------------------------------------
@@ -512,7 +512,7 @@ def consolidate_uptimes(options,raw=False):
     return result
 
   # now we consolidate the periods
-  delta = datetime.timedelta(minutes=TIME_DELTA)
+  delta = datetime.timedelta(minutes=options.min_downtime)
   i = 0
   while True and len(result):
     if i == len(result)-1:
