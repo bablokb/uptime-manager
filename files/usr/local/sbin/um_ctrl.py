@@ -229,6 +229,7 @@ def do_add_sql(options,sql_args):
 
   # split interval
   start,end = sql_args[4].split("-")
+  # add seconds if not specified
   if len(start) == 5:
     start = "%s:00" % start
   if len(end) == 5:
@@ -282,7 +283,7 @@ def next_day(dtype,value):
   elif dtype == 'DOM':
     return value % 31 + 1
   else:
-    value  = sql2date(value)
+    value  = sql2datetime(value,"00:00:00")
     value += datetime.timedelta(1)
     return   date2sql(value)
 
@@ -423,10 +424,18 @@ def do_get(options):
     elif get_type == "halt" and state == 1:
       continue
     elif now <= time:
+      # convert to datetime and add grace-periods
+      dt_time = datetime.datetime.strptime("%s %s" % (day,time),"%Y-%m-%d %H:%M:%S")
+      if get_type == "boot":
+        delta = datetime.timedelta(minutes=-options.grace_boot)
+      elif get_type == "halt":
+        delta = datetime.timedelta(minutes=options.grace_halt)
+      dt_time += delta
+      str_time = datetime.datetime.strftime(dt_time,"%Y-%m-%d %H:%M:%S")
       if options.cmd == 'get':
-        print("%s %s" % (day,time))
+        print(str_time)
       else:
-        return "%s %s" % (day,time)
+        return str_time,dt_time
       return
 
   return ""
@@ -450,8 +459,7 @@ def do_set(options):
     print("the set command needs a single option halt|boot")
     return
 
-  t_action  = do_get(options)
-  dt_action = datetime.datetime.strptime(t_action,"%Y-%m-%d %H:%M:%S")
+  t_action,dt_action = do_get(options)
   dt_now    = datetime.datetime.now()
   delta     = dt_action - dt_now
   logger.msg("INFO","setting next %s at %s" % (set_type,t_action))
@@ -530,6 +538,32 @@ def consolidate_uptimes(options,raw=False):
 
   return result
 
+# --- read settings   ------------------------------------------------------
+
+def read_settings(options):
+  """ read settings from /etc/uptime-manager.json """
+
+  sname = "/etc/uptime-manager.json"
+  if os.path.exists(sname):
+    logger.msg("INFO","reading settings from %s" % sname)
+    with open(sname,"r") as f:
+      settings = json.load(f)
+  else:
+    settings = {}
+
+  if "grace_boot" in settings:
+    options.grace_boot = settings["grace_boot"]
+  else:
+    options.grace_boot = 3
+  if "grace_halt" in settings:
+    options.grace_halt = settings["grace_halt"]
+  else:
+    options.grace_halt = 3
+  if "min_downtime" in settings:
+    options.min_downtime = settings["min_downtime"]
+  else:
+    options.min_downtime = 10
+
 # --- commandline parser   --------------------------------------------------
 
 def get_parser():
@@ -585,6 +619,10 @@ if __name__ == '__main__':
   # configure message-class
   logger = Msg(options.level)
 
+  # read settings
+  read_settings(options)
+
+  # execute command and exit
   func = globals()["do_%s" % options.cmd]
   func(options)
   sys.exit(0)
