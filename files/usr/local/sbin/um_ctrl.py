@@ -367,7 +367,6 @@ def do_list(options):
     sep = list_type[2]
     parts = list_type.split(sep)
     list_type = "%s%s%s%s" % (parts[0],sep,parts[1],sep)
-    print(list_type)
     if length == 8:
       list_type = list_type + "20" + parts[2]
     else:
