@@ -317,14 +317,19 @@ def do_del(options):
     logger.msg("ERROR", "missing argument for delete")
     sys.exit(3)  
   elif len(options.args) == 1:
-    logger.msg("INFO", "deleting all entries for owner %s" % options.args[0])
-    statement = "DELETE FROM schedule where owner=?"
+    try:
+      options.args[0] = int(options.args[0])
+      logger.msg("INFO", "deleting all entries for id %d" % options.args[0])
+      statement = "DELETE FROM schedule where id=?"
+    except:
+      logger.msg("INFO", "deleting all entries for owner %s" % options.args[0])
+      statement = "DELETE FROM schedule where owner=?"
   else:
     logger.msg("INFO", "deleting entries for owner,label=(%s,%s)" %
                (options.args[0],options.args[1]))
     statement = "DELETE FROM schedule where owner=? and label=?"
 
-  exec_sql(options,statement,args=tuple(options.args),commit=True)
+  exec_sql(options,statement,args=(options.args[0],),commit=True)
 
 # --- list entries of the database   ----------------------------------------
 
@@ -574,7 +579,7 @@ def get_parser():
 Available commands:
   create:                                       (re-) create the database
   add owner label DOW|DOM|DATE value start-end: add uptime period
-  del owner [label]:                            delete all entries for owner or owner/label
+  del id | owner [label]:                       delete all entries for id or owner or owner/label
   raw:                                          list database (raw mode)
   list [today|week|<date>]:                     list all uptimes (unconsolidated)
   get halt|boot|all|raw:                        get (next) halt-time/boot-time
