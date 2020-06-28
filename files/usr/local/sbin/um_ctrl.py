@@ -28,13 +28,13 @@ STATE_SEP    = "-----------|----------|------"
 STATE_FORMAT = "{0:10} | {1:8} | {2:4}"
 
 # tuple-index for rows retrieved
+TYPE_INDEX    = 3
+VALUE_INDEX   = 4
 STATE_INDEX   = 5
 STATE_INDEX_S = 2
 I_TIME  = 6
 I_DATE  = 0
 
-# state text
-STATE_VALUES = ['down','up']
 
 # --- system-imports   -----------------------------------------------------
 
@@ -90,6 +90,21 @@ def dow(date):
   """ return isoweekday of given date """
 
   return date.isoweekday()
+
+# --- localized day-of-week map   -------------------------------------------
+
+def dow_map():
+  """ return localized day-of-week map """
+
+  result = {}
+  day   = datetime.datetime.strptime("01.01.2000","%d.%M.%Y")
+  delta = datetime.timedelta(days=1)
+  for _ in range(7):
+    result[str(dow(day))] = day.strftime("%A")
+    day = day + delta
+  return result
+
+# day-of-week text
 
 # --- day of month of given date   ------------------------------------------
 
@@ -286,17 +301,27 @@ def next_day(dtype,value):
     value += datetime.timedelta(1)
     return   date2sql(value)
 
+# --- format value   --------------------------------------------------------
+
+def format_value(vtype,value):
+  """ return formatted value """
+
+  if vtype == 'DOW':
+    return DOW['value']
+  else:
+    return value
+
 # --- print results   -------------------------------------------------------
 
-def print_results(rows,state=False):
+def print_results(options,rows,state_only=False):
   """ pretty-print results """
-  if state:
+  if state_only:
     if rows:
       print(STATE_HEADER)
       print(STATE_SEP)
       for row in rows:
         row = list(row)
-        row[STATE_INDEX_S] = STATE_VALUES[row[STATE_INDEX_S]]
+        row[STATE_INDEX_S] = options.STATE_VALUES[row[STATE_INDEX_S]]
         print(STATE_FORMAT.format(*row))
   else:
     if rows:
@@ -304,7 +329,9 @@ def print_results(rows,state=False):
       print(LIST_SEP)
       for row in rows:
         row = list(row)
-        row[STATE_INDEX] = STATE_VALUES[row[STATE_INDEX]]
+        if row[TYPE_INDEX] == 'DOW':
+          row[VALUE_INDEX] = options.DOW[row[VALUE_INDEX]]
+        row[STATE_INDEX] = options.STATE_VALUES[row[STATE_INDEX]]
         print(LIST_FORMAT.format(*row))
 
 # --- delete an uptime-entry to the database   ------------------------------
@@ -379,7 +406,7 @@ def do_list(options):
     rows = fetch_uptimes(options,datetime.datetime.strptime(list_type,"%x").date())
 
   # print results
-  print_results(rows)
+  print_results(options,rows)
 
 # --- query uptimes for a given date   ---------------------------------------
 
@@ -416,7 +443,7 @@ def do_get(options):
 
   states = consolidate_uptimes(options,raw=get_type=='raw')
   if get_type in ['raw','all']:
-    print_results(states,True)
+    print_results(options,states,True)
     return ""
 
   for (day,time,state) in states:
@@ -507,7 +534,7 @@ def consolidate_uptimes(options,raw=False):
   # for debug-purposes, print list
   if logger.is_level("DEBUG"):
     logger.msg("DEBUG","state-changes before consolidation: %d" % len(result))
-    print_results(result,True)
+    print_results(options,result,True)
 
   # finish here, if raw values were requested
   if raw:
@@ -539,7 +566,7 @@ def consolidate_uptimes(options,raw=False):
   # for debug-purposes, print list
   if logger.is_level("DEBUG"):
     logger.msg("DEBUG","state-changes after consolidation: %d" % len(result))
-    print_results(result,True)
+    print_results(options,result,True)
 
   return result
 
@@ -620,6 +647,8 @@ if __name__ == '__main__':
     sys.exit(0)
   else:
     options.pgmdir = os.path.dirname(sys.argv[0])
+    options.DOW = dow_map()                         # map isoweekday to string
+    options.STATE_VALUES = ['down','up']
 
   # configure message-class
   logger = Msg(options.level)
