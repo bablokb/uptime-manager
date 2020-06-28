@@ -39,7 +39,7 @@ I_DATE  = 0
 # --- system-imports   -----------------------------------------------------
 
 import argparse
-import sys, os, datetime, sqlite3, locale, json
+import sys, os, datetime, sqlite3, locale, json, hashlib
 
 # ---------------------------------------------------------------------------
 # --- helper-class for options   --------------------------------------------
@@ -235,7 +235,9 @@ def do_add_sql(options,sql_args):
   logger.msg("DEBUG","adding entry to the database")
 
   # calculate id of arguments
-  id = hash(''.join(sql_args))
+  sql_args[2] = sql_args[2].upper()
+  id = int(hashlib.sha256(''.join(sql_args).encode('utf-8')).
+           hexdigest()[:16],16)-2**63
 
   logger.msg("TRACE","sql_args: %r" % sql_args)
   PRE_INSERT_STMT = 'DELETE FROM schedule where id=?'
@@ -250,7 +252,7 @@ def do_add_sql(options,sql_args):
     end   = "%s:00" % end
 
   # convert date
-  dtype = sql_args[2].upper()
+  dtype = sql_args[2]
   if dtype == 'DATE':
     sep = sql_args[3][2]
     parts=sql_args[3].split(sep)
