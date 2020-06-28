@@ -250,7 +250,7 @@ def do_add_sql(options,sql_args):
     end   = "%s:00" % end
 
   # convert date
-  dtype = sql_args[2]
+  dtype = sql_args[2].upper()
   if dtype == 'DATE':
     sep = sql_args[3][2]
     parts=sql_args[3].split(sep)
