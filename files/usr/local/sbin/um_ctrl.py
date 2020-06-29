@@ -476,10 +476,11 @@ def do_get(options):
 
 def do_set(options):
   """ set next boot or halt time
-      This method will call um_set_boot/um_set_halt and pass three values:
+      This method will call um_set_boot/um_set_halt and pass four values:
         - action-time as %Y-%m-%d %H:%M:%S
         - action-time as %s (unix-timestamp aka seconds since epoch)
         - time in seconds until action-time
+        - path to database
   """
 
   if len(options.args) != 1:
@@ -496,8 +497,9 @@ def do_set(options):
   delta     = dt_action - dt_now
   logger.msg("INFO","setting next %s at %s" % (set_type,t_action))
   hook = os.path.join(options.pgmdir,"um_set_%s" % set_type)
-  os.system("%s \"%s\" %d %d &" %
-            (hook,t_action,dt_action.timestamp(),delta.total_seconds()))
+  os.system("%s \"%s\" %d %d \"%s\" &" %
+            (hook,t_action,dt_action.timestamp(),
+             delta.total_seconds(),options.db_name))
 
 # --- consolidate uptimes   --------------------------------------------------
 

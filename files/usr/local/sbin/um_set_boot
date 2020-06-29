@@ -15,7 +15,7 @@
 
 # use local override if available
 if type -p um_set_boot.local > /dev/null; then
-  um_set_boot.local
+  um_set_boot.local "$@"
   exit $?
 fi
 
@@ -24,8 +24,10 @@ if [ "$UID" != 0 ]; then
   echo "boot-time:           $1"
   echo "boot-time (seconds): ${2%.*}"
   echo "seconds until boot:  $3"
+  echo "database-name:       $4"
 else
   # production-mode
+  echo "Setting next boot-time to $1"
   if [ -f /sys/class/rtc/rtc0/wakealarm ]; then
     echo "${2%.*}" > /sys/class/rtc/rtc0/wakealarm
   fi

@@ -15,7 +15,7 @@
 
 # use local override if available
 if type -p um_set_halt.local > /dev/null; then
-  um_set_halt.local
+  um_set_halt.local "$@"
   exit $?
 fi
 
@@ -24,15 +24,19 @@ if [ "$UID" != 0 ]; then
   echo "halt-time:           $1"
   echo "halt-time (seconds): ${2%.*}"
   echo "seconds until halt:  $3"
+  echo "database-name:       $4"
 else
   # production-mode
   systemctl stop um_set_halt.timer  # remove existing timer (if active)
   if [ "${2%.*}" -lt 600 ]; then
     # schedule shutdown
+    echo "scheduling direct shutdown at $1"
     systemd-run --on-calendar="$1" --unit=um_set_halt /sbin/halt -p
   else
     # reschedule set halt (in case something changed)
-    systemd-run --on-calendar="$1" --unit=um_set_halt \
-                                               "${0%/*}/um_ctrl.py" set halt
+    let next_check=${2%.*}-590
+    echo "reschedule check at $(date -d @$next_check)"
+    systemd-run --on-calendar="@$next_check" --unit=um_set_halt \
+                                  "${0%/*}/um_ctrl.py" -D "$4" set halt
   fi
 fi
