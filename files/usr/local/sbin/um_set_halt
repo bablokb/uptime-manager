@@ -33,6 +33,6 @@ else
   else
     # reschedule set halt (in case something changed)
     systemd-run --on-calendar="$1" --unit=um_set_halt \
-                                               "${0%%/*}/um_ctrl.py" set halt
+                                               "${0%/*}/um_ctrl.py" set halt
   fi
 fi
