@@ -17,8 +17,8 @@ After=multi-user.target
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/usr/local/sbin/um_ctrl.py set halt
-ExecStop=/usr/local/sbin/um_ctrl.py set boot
+ExecStart=/usr/local/sbin/um_ctrl.py -D /var/lib/uptime-manager/schedule.sqlite set halt
+ExecStop=/usr/local/sbin/um_ctrl.py -D /var/lib/uptime-manager/schedule.sqlite set boot
 
 [Install]
 WantedBy=multi-user.target
