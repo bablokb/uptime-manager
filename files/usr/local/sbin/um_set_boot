@@ -29,6 +29,7 @@ else
   # production-mode
   echo "Setting next boot-time to $1"
   if [ -f /sys/class/rtc/rtc0/wakealarm ]; then
+    echo "0"       > /sys/class/rtc/rtc0/wakealarm   # clear old setting
     echo "${2%.*}" > /sys/class/rtc/rtc0/wakealarm
   fi
 fi
