@@ -358,7 +358,7 @@ def do_del(options):
                (options.args[0],options.args[1]))
     statement = "DELETE FROM schedule where owner=? and label=?"
 
-  exec_sql(options,statement,args=(options.args[0],),commit=True)
+  exec_sql(options,statement,args=options.args,commit=True)
 
 # --- list entries of the database   ----------------------------------------
 
