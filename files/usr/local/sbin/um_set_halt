@@ -28,15 +28,6 @@ if [ "$UID" != 0 ]; then
 else
   # production-mode
   systemctl stop um_set_halt.timer  # remove existing timer (if active)
-  if [ "${2%.*}" -lt 600 ]; then
-    # schedule shutdown
-    echo "scheduling direct shutdown at $1"
-    systemd-run --on-calendar="$1" --unit=um_set_halt /sbin/halt -p
-  else
-    # reschedule set halt (in case something changed)
-    let next_check=${2%.*}-590
-    echo "reschedule check at $(date -d @$next_check)"
-    systemd-run --on-calendar="@$next_check" --unit=um_set_halt \
-                                  "${0%/*}/um_ctrl.py" -D "$4" set halt
-  fi
+  echo "scheduling shutdown at $1"
+  systemd-run --on-calendar="$1" --unit=um_set_halt /sbin/halt -p
 fi
