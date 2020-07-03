@@ -508,7 +508,8 @@ def consolidate_uptimes(options,raw=False):
 
   # we might have to look into the future, so we iterate starting from today
   delta = datetime.timedelta(1)
-  day = datetime.date.today()
+  day   = datetime.date.today()
+  now   = datetime.datetime.now().strftime("%H:%M:%S")
 
   result = []
   state = 0
@@ -517,6 +518,7 @@ def consolidate_uptimes(options,raw=False):
   # we first aggregate all uptime periods
   for i in range(TIME_HORIZON):
     logger.msg("TRACE","examining day %s" % date2sql(day))
+    first_boot = i == 0
     rows = fetch_uptimes(options,day)
     for row in rows:
       # aggregate uptime-requests
@@ -528,10 +530,17 @@ def consolidate_uptimes(options,raw=False):
 
       # next halt is when we reach zero
       if (state == 0):
+        logger.msg("TRACE","adding time: %s, state: %d" % (row[I_TIME],state))
         result.append((date2sql(day),row[I_TIME],state))
-      # next boot is transition from 0 to 1
+      # next boot is after a transition from 0 to 1
       elif (state == 1 and row[STATE_INDEX] == 1):
+        logger.msg("TRACE","adding time: %s, state: %d" % (row[I_TIME],state))
         result.append((date2sql(day),row[I_TIME],state))
+      elif (state > 1 and row[STATE_INDEX] == 1
+            and first_boot and row[I_TIME] > now):
+        logger.msg("TRACE","adding time: %s, state: %d" % (row[I_TIME],state))
+        result.append((date2sql(day),row[I_TIME],1))
+        first_boot = False
     # at this stage we have to peek into the next day
     day = day + delta
 
@@ -547,10 +556,16 @@ def consolidate_uptimes(options,raw=False):
   # now we consolidate the periods
   delta = datetime.timedelta(minutes=options.min_downtime)
   i = 0
+  day = datetime.date.today().strftime("%Y-%m-%d")
   while True and len(result):
     if i >= len(result)-1:
       break
     (day_c,time_c,state_c) = result[i]
+    logger.msg("TRACE","examining: %s,%s,%d" % (day_c,time_c,state_c))
+    if day_c == day and time_c < now:
+      # skip events in the past
+      del result[i]    # deletes current entry
+      continue
     if state_c:
       # never remove an up-event
       i += 1
