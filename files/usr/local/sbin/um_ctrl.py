@@ -439,8 +439,9 @@ def do_get(options):
 
   get_type = options.args[0] if len(options.args) else 'halt'
   logger.msg("INFO","calculating next %s" % get_type)
-  today = date2sql(datetime.date.today())
-  now   = datetime.datetime.now().time().strftime("%H:%M:%S")
+  today  = date2sql(datetime.date.today())
+  dt_now = datetime.datetime.now()
+  now    = dt_now.time().strftime("%H:%M:%S")
   logger.msg("TRACE","now: %s" % now)
 
   states = consolidate_uptimes(options,raw=get_type=='raw')
@@ -455,11 +456,14 @@ def do_get(options):
       continue
     elif get_type == "halt" and state == 1:
       continue
-    elif now <= time:
+    elif now < time:
       # convert to datetime and add grace-periods
       dt_time = datetime.datetime.strptime("%s %s" % (day,time),"%Y-%m-%d %H:%M:%S")
       if get_type == "boot":
         delta = datetime.timedelta(minutes=-options.grace_boot)
+        if dt_time + delta < dt_now:
+          # boot time must be in the future (should be the case anyhow)
+          delta = 0
       elif get_type == "halt":
         delta = datetime.timedelta(minutes=options.grace_halt)
       dt_time += delta
