@@ -69,7 +69,11 @@ install_files() {
 # --- configure system   ----------------------------------------------------
 
 configure_system() {
-  :
+  if [ ! -f /var/lib/uptime-manager/schedule.sqlite ]; then
+    echo -e "[INFO] creating default database" 2>&1
+    mkdir -p /var/lib/uptime-manager
+    um_ctrl.py create
+  fi
 }
 
 # --- activate service   ----------------------------------------------------
