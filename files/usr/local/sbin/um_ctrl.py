@@ -12,6 +12,8 @@
 
 VERSION=1             # increase with incompatible changes
 
+DEFAULT_DB="/var/lib/uptime-manager/schedule.sqlite"
+
 TIME_HORIZON =  7     # we peek at most 7 days into the future
 
 # list formatting
@@ -635,8 +637,8 @@ Available commands:
   get halt|boot|all|raw:                        get (next) halt-time/boot-time
   set halt|boot:                                set next halt-time|boot-time (call um_set_halt|um_set_boot)
   """)
-  parser.add_argument('-D', '--db', metavar=('database',), required=True,
-    dest='db_name', help='database-file')
+  parser.add_argument('-D', '--db', metavar=('database',),
+                      default=DEFAULT_DB,dest='db_name',help='database-file')
 
   parser.add_argument('-q', '--quiet', default=False, action='store_true',
     dest='quiet',
