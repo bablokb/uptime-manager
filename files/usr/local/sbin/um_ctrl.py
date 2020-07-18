@@ -17,11 +17,11 @@ DEFAULT_DB="/var/lib/uptime-manager/schedule.sqlite"
 TIME_HORIZON =  7     # we peek at most 7 days into the future
 
 # list formatting
-LIST_HEADER = "Date       |Time      |Owner    | Label                | Type | Value      | State |"
+LIST_HEADER = "Date       |Time      |Class    | Label                | Type | Value      | State |"
 LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
 LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} |"
 
-RAW_HEADER = "Owner    | Label                | Type | Value      | State | Time     | id"
+RAW_HEADER = "Class    | Label                | Type | Value      | State | Time     | id"
 RAW_SEP    = "---------|----------------------|------|------------|-------|----------|---------------------"
 RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8} | {6:20d}"
 
@@ -192,7 +192,7 @@ def do_create(options):
 
   cursor.execute("DROP TABLE IF EXISTS schedule")
   cursor.execute("""CREATE TABLE schedule
-      (owner text,
+      (class text,
        label text,
        type  text,
        value text,
@@ -207,7 +207,7 @@ def do_add(options):
   """ add an entry to the database
 
       format of the arguments:
-        owner label type value start-end
+        class label type value start-end
 
       type is one of DOW/DOM/DATE
 
@@ -353,12 +353,12 @@ def do_del(options):
       logger.msg("INFO", "deleting all entries for id %d" % options.args[0])
       statement = "DELETE FROM schedule where id=?"
     except:
-      logger.msg("INFO", "deleting all entries for owner %s" % options.args[0])
-      statement = "DELETE FROM schedule where owner=?"
+      logger.msg("INFO", "deleting all entries for class %s" % options.args[0])
+      statement = "DELETE FROM schedule where class=?"
   else:
-    logger.msg("INFO", "deleting entries for owner,label=(%s,%s)" %
+    logger.msg("INFO", "deleting entries for class,label=(%s,%s)" %
                (options.args[0],options.args[1]))
-    statement = "DELETE FROM schedule where owner=? and label=?"
+    statement = "DELETE FROM schedule where class=? and label=?"
 
   exec_sql(options,statement,args=options.args,commit=True)
 
@@ -630,8 +630,8 @@ def get_parser():
     epilog="""
 Available commands:
   create:                                       (re-) create the database
-  add owner label DOW|DOM|DATE value start-end: add uptime period
-  del id | owner [label]:                       delete all entries for id or owner or owner/label
+  add class label DOW|DOM|DATE value start-end: add uptime period
+  del id | class [label]:                       delete all entries for id or class or class/label
   raw:                                          list database (raw mode)
   list [today|week|<date>]:                     list all uptimes (unconsolidated)
   get halt|boot|all|raw:                        get (next) halt-time/boot-time
