@@ -671,6 +671,8 @@ if __name__ == '__main__':
     print("version: %s" % VERSION)
     sys.exit(0)
   else:
+    if options.quiet:
+      options.level = 'NONE'
     options.pgmdir = os.path.dirname(sys.argv[0])
     options.DOW = dow_map()                         # map isoweekday to string
     options.STATE_VALUES = ['down','up']
