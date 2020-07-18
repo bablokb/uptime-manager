@@ -2,9 +2,7 @@
 # --------------------------------------------------------------------------
 # Uptime-Manager: default implementation of um_set_halt
 #
-# This script will
-#   - schedule a shutdown if seconds until halt are < 600 (10 minutes)
-#   - reschedule "um_ctrl.py set halt" otherwise
+# This script will schedule a shutdown at the given time using a transient timer
 # 
 # Author: Bernhard Bablok
 # License: GPL3
@@ -29,5 +27,6 @@ else
   # production-mode
   systemctl stop um_set_halt.timer  # remove existing timer (if active)
   echo "scheduling shutdown at $1"
-  systemd-run --on-calendar="$1" --unit=um_set_halt /sbin/halt -p
+  systemd-run --on-calendar="$1" --unit=um_set_halt \
+              --description "scheduling halt -p" /sbin/halt -p
 fi
