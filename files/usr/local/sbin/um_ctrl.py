@@ -221,8 +221,8 @@ def do_add(options):
     logger.msg("INFO","add: parsing new entries from stdin")
     # read from stdin
     for line in sys.stdin:
-      if line[0] == '#':
-        # ignore comments
+      if len(line) < 2 or line[0] == '#':
+        # ignore empty lines or comments
         continue
       args = shlex.split(line)[:5] # strip of extra stuff (e.g. comments)
       do_add_sql(options,args)
