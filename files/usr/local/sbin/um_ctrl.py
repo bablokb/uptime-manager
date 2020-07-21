@@ -41,7 +41,7 @@ I_DATE  = 0
 # --- system-imports   -----------------------------------------------------
 
 import argparse
-import sys, os, datetime, sqlite3, locale, json, hashlib
+import sys, os, datetime, sqlite3, locale, json, hashlib, shlex
 
 # ---------------------------------------------------------------------------
 # --- helper-class for options   --------------------------------------------
@@ -223,7 +223,7 @@ def do_add(options):
       if line[0] == '#':
         # ignore comments
         continue
-      args = line.split()[:5]     # strip of extra stuff (e.g. comments)
+      args = shlex.split(line)[:5] # strip of extra stuff (e.g. comments)
       do_add_sql(options,args)
   else:
     # use commandline arguments
