@@ -339,10 +339,30 @@ def print_results(options,rows,state_only=False):
         row[STATE_INDEX] = options.STATE_VALUES[row[STATE_INDEX]]
         print(LIST_FORMAT.format(*row))
 
-# --- delete an uptime-entry to the database   ------------------------------
+# --- enable a class   ------------------------------------------------------
+
+def do_enable(options):
+  """ enable all entries of given class in the database """
+  logger.msg("INFO","enabling entries of a class from the database")
+
+  if len(options.args) == 0:
+    logger.msg("ERROR", "missing argument for enable")
+    sys.exit(3)
+
+# --- disnable a class   ----------------------------------------------------
+
+def do_disable(options):
+  """ disable all entries of given class in the database """
+  logger.msg("INFO","disabling entries of a class from the database")
+
+  if len(options.args) == 0:
+    logger.msg("ERROR", "missing argument for disable")
+    sys.exit(3)
+
+# --- delete an uptime-entry from the database   ----------------------------
 
 def do_del(options):
-  """ deleta entries in the database """
+  """ delete  entries from the database """
   logger.msg("INFO","deleting entries from the database")
 
   if len(options.args) == 0:
@@ -632,6 +652,8 @@ def get_parser():
 Available commands:
   create:                                       (re-) create the database
   add class label DOW|DOM|DATE value start-end: add uptime period
+  enable class                                  enable uptimes of class
+  disable class                                 disable uptimes of class
   del id | class [label]:                       delete all entries for id or class or class/label
   raw:                                          list database (raw mode)
   list [today|week|<date>]:                     list all uptimes (unconsolidated)
@@ -655,7 +677,7 @@ Available commands:
     help='print this help')
 
   parser.add_argument('cmd',
-                      choices=['create','add','del','raw','list','get','set'],
+     choices=['create','add','enable','disable','del','raw','list','get','set'],
                       help='command to execute')
   parser.add_argument('args', nargs='*', metavar='argument',
     help='arguments for given command')
