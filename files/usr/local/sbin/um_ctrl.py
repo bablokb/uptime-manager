@@ -17,9 +17,9 @@ DEFAULT_DB="/var/lib/uptime-manager/schedule.sqlite"
 TIME_HORIZON =  7     # we peek at most 7 days into the future
 
 # list formatting
-LIST_HEADER = "Date       |Time      |Class    | Label                | Type | Value      | State | Enabled |"
-LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|---------|"
-LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} | {8:7} |"
+LIST_HEADER = "Date       |Time      |Class    | Label                | Type | Value      | State |"
+LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
+LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} |"
 
 RAW_HEADER = "Class    | Label                | Type | Value      | State | Time     | Enabled | id"
 RAW_SEP    = "---------|----------------------|------|------------|-------|----------|---------|---------------------"
