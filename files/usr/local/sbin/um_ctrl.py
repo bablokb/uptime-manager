@@ -10,20 +10,20 @@
 #
 # --------------------------------------------------------------------------
 
-VERSION=1             # increase with incompatible changes
+VERSION=2             # increase with incompatible changes
 
 DEFAULT_DB="/var/lib/uptime-manager/schedule.sqlite"
 
 TIME_HORIZON =  7     # we peek at most 7 days into the future
 
 # list formatting
-LIST_HEADER = "Date       |Time      |Class    | Label                | Type | Value      | State |"
-LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|"
-LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} |"
+LIST_HEADER = "Date       |Time      |Class    | Label                | Type | Value      | State | Enabled |"
+LIST_SEP    = "-----------|----------|---------|----------------------|------|------------|-------|---------|"
+LIST_FORMAT = "{0:10} | {6:8} |{1:8} | {2:20} | {3:4} | {4:10} | {5:5} | {8:7} |"
 
-RAW_HEADER = "Class    | Label                | Type | Value      | State | Time     | id"
-RAW_SEP    = "---------|----------------------|------|------------|-------|----------|---------------------"
-RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8} | {6:20d}"
+RAW_HEADER = "Class    | Label                | Type | Value      | State | Time     | Enabled | id"
+RAW_SEP    = "---------|----------------------|------|------------|-------|----------|---------|---------------------"
+RAW_FORMAT = "{0:8} | {1:20} | {2:4} | {3:10} | {4:5d} | {5:8} | {7:7} | {6:20d}"
 
 STATE_HEADER = "Date       |Time      | State"
 STATE_SEP    = "-----------|----------|------"
@@ -198,7 +198,8 @@ def do_create(options):
        value text,
        state integer,
        time  text,
-       id integer)""")
+       id integer,
+       enabled integer)""")
   close_db(options)
 
 # --- add an uptime-entry to the database   ---------------------------------
@@ -243,7 +244,7 @@ def do_add_sql(options,sql_args):
 
   logger.msg("TRACE","sql_args: %r" % sql_args)
   PRE_INSERT_STMT = 'DELETE FROM schedule where id=?'
-  INSERT_STMT     = 'INSERT INTO schedule VALUES (' + 6 * '?,' + '?)'
+  INSERT_STMT     = 'INSERT INTO schedule VALUES (' + 7 * '?,' + '?)'
 
   # split interval
   start,end = sql_args[4].split("-")
@@ -276,19 +277,19 @@ def do_add_sql(options,sql_args):
   # remove old entries with given id
   exec_sql(options,PRE_INSERT_STMT,args=(id,),commit=True)
 
-  # start of uptime-interval
-  args=(sql_args[0],sql_args[1],dtype,value,1,start,id)
+  # start of uptime-interval (add with enabled==1)
+  args=(sql_args[0],sql_args[1],dtype,value,1,start,id,1)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
-  # end of uptime-interval
-  args=(sql_args[0],sql_args[1],dtype,value,0,end,id)
+  # end of uptime-interval (add with enabled==1)
+  args=(sql_args[0],sql_args[1],dtype,value,0,end,id,1)
   exec_sql(options,INSERT_STMT,args=args,commit=True)
 
-  # add second interval if necessary
+  # add second interval if necessary (add with enabled==1)
   if start2:
-    args=(sql_args[0],sql_args[1],dtype,value2,1,start2,id)
+    args=(sql_args[0],sql_args[1],dtype,value2,1,start2,id,1)
     exec_sql(options,INSERT_STMT,args=args,commit=True)
-    args=(sql_args[0],sql_args[1],dtype,value2,0,end2,id)
+    args=(sql_args[0],sql_args[1],dtype,value2,0,end2,id,1)
     exec_sql(options,INSERT_STMT,args=args,commit=True)
 
 # --- get next day of given dtype   -----------------------------------------
