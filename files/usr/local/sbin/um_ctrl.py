@@ -349,6 +349,9 @@ def do_enable(options):
     logger.msg("ERROR", "missing argument for enable")
     sys.exit(3)
 
+  ENABLE_STMT = 'UPDATE schedule SET enabled=1 where class=?'
+  exec_sql(options,ENABLE_STMT,args=(options.args[0],),commit=True)
+
 # --- disnable a class   ----------------------------------------------------
 
 def do_disable(options):
@@ -358,6 +361,9 @@ def do_disable(options):
   if len(options.args) == 0:
     logger.msg("ERROR", "missing argument for disable")
     sys.exit(3)
+
+  DISABLE_STMT = 'UPDATE schedule SET enabled=0 where class=?'
+  exec_sql(options,DISABLE_STMT,args=(options.args[0],),commit=True)
 
 # --- delete an uptime-entry from the database   ----------------------------
 
