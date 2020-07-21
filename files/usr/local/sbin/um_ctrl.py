@@ -450,9 +450,10 @@ def fetch_uptimes(options,date):
   cursor = options.db.cursor()
   cursor.execute("""
      select '%s',* from schedule where
+      enabled = 1 AND (
       type = 'DOW'  AND value=?  OR
       type = 'DOM'  AND value=?  OR
-      type = 'DATE' AND value=?
+      type = 'DATE' AND value=? )
          order by time, state desc""" % date2sql(date),
                  (dow(date),dom(date),date2sql(date)))
   rows = cursor.fetchall()
