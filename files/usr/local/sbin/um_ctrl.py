@@ -653,18 +653,20 @@ def read_settings(options):
   else:
     settings = {}
 
+  # defaults
+  options.grace_boot   = 3
+  options.grace_halt   = 3
+  options.min_downtime = 10
+  options.auto_set     = False
+
   if "grace_boot" in settings:
     options.grace_boot = settings["grace_boot"]
-  else:
-    options.grace_boot = 3
   if "grace_halt" in settings:
     options.grace_halt = settings["grace_halt"]
-  else:
-    options.grace_halt = 3
   if "min_downtime" in settings:
     options.min_downtime = settings["min_downtime"]
-  else:
-    options.min_downtime = 10
+  if "auto_set" in settings:
+    options.auto_set = settings["auto_set"]
 
 # --- commandline parser   --------------------------------------------------
 
