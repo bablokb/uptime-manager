@@ -217,7 +217,9 @@ def do_add(options):
   """
 
   # check if input is on the commandline or from stdin
-  if options.args[0] == '-':
+  if len(options.args) == 0:
+    logger.msg("WARN","add: no arguments for add command (nothing added)")
+  elif options.args[0] == '-':
     logger.msg("INFO","add: parsing new entries from stdin")
     # read from stdin
     for line in sys.stdin:
