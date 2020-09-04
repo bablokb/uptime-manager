@@ -233,6 +233,13 @@ def do_add(options):
     logger.msg("INFO","add: parsing new entries from the commandline")
     do_add_sql(options,options.args)
 
+  if options.auto_set:
+    logger.msg("INFO","add: automatically updating next halt and boot")
+    options.args = ['halt']
+    do_set(options)
+    options.args = ['boot']
+    do_set(options)
+
 # --- add an uptime-entry to the database   ---------------------------------
 
 def do_add_sql(options,sql_args):
@@ -390,6 +397,13 @@ def do_del(options):
     statement = "DELETE FROM schedule where class=? and label=?"
 
   exec_sql(options,statement,args=options.args,commit=True)
+
+  if options.auto_set:
+    logger.msg("INFO","del: automatically updating next halt and boot")
+    options.args = ['halt']
+    do_set(options)
+    options.args = ['boot']
+    do_set(options)
 
 # --- clean old entries in the database   -----------------------------------
 
