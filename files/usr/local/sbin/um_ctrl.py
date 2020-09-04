@@ -492,8 +492,11 @@ def do_get(options):
       if get_type == "boot":
         delta = datetime.timedelta(minutes=-options.grace_boot)
         if dt_time + delta < dt_now:
-          # boot time must be in the future (should be the case anyhow)
-          delta = 0
+          # boot time is in the past or within the next grace_boot minutes
+          # so we ignore this event
+          logger.msg("TRACE","ignoring %s (within %d minutes of now)" %
+                     (dt_time,options.grace_boot))
+          continue
       elif get_type == "halt":
         delta = datetime.timedelta(minutes=options.grace_halt)
       dt_time += delta
