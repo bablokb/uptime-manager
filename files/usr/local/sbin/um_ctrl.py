@@ -391,6 +391,18 @@ def do_del(options):
 
   exec_sql(options,statement,args=options.args,commit=True)
 
+# --- clean old entries in the database   -----------------------------------
+
+def do_clean(options):
+  """ clean old entries in the database """
+
+  date_now = datetime.date.today()
+  open_db(options)
+  logger.msg("INFO", "deleting entries in database older than %s" %
+             datetime.datetime.strftime(date_now,"%Y-%m-%d"))
+  statement = "DELETE FROM schedule where value < ? and type = 'DATE'"
+  exec_sql(options,statement,args=(date_now,),commit=True)
+
 # --- list entries of the database   ----------------------------------------
 
 def do_raw(options):
@@ -667,6 +679,7 @@ Available commands:
   enable class                                  enable uptimes of class
   disable class                                 disable uptimes of class
   del id | class [label]:                       delete all entries for id or class or class/label
+  clean:                                        remove old entries of type DATE
   raw:                                          list database (raw mode)
   list [today|week|<date>]:                     list all uptimes (unconsolidated)
   get halt|boot|all|raw:                        get (next) halt-time/boot-time
@@ -689,7 +702,8 @@ Available commands:
     help='print this help')
 
   parser.add_argument('cmd',
-     choices=['create','add','enable','disable','del','raw','list','get','set'],
+     choices=['create','add','enable','disable','del','clean',
+              'raw','list','get','set'],
                       help='command to execute')
   parser.add_argument('args', nargs='*', metavar='argument',
     help='arguments for given command')
