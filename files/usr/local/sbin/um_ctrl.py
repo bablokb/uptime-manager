@@ -12,7 +12,8 @@
 
 VERSION=2             # increase with incompatible changes
 
-DEFAULT_DB="/var/lib/uptime-manager/schedule.sqlite"
+DEFAULT_DB  = "/var/lib/uptime-manager/schedule.sqlite"
+CONFIG_FILE = "/etc/uptime-manager.json"
 
 TIME_HORIZON =  7     # we peek at most 7 days into the future
 
@@ -659,28 +660,18 @@ def consolidate_uptimes(options,raw=False):
 def read_settings(options):
   """ read settings from /etc/uptime-manager.json """
 
-  sname = "/etc/uptime-manager.json"
-  if os.path.exists(sname):
-    logger.msg("INFO","reading settings from %s" % sname)
-    with open(sname,"r") as f:
-      settings = json.load(f)
+  if not os.path.exists(CONFIG_FILE):
+    logger.msg("ERROR","cannot read config-file %s" % CONFIG_FILE)
+    sys.exit(3)
   else:
-    settings = {}
+    logger.msg("DEBUG","reading settings from %s" % CONFIG_FILE)
+    with open(CONFIG_FILE,"r") as f:
+      settings = json.load(f)
 
-  # defaults
-  options.grace_boot   = 3
-  options.grace_halt   = 3
-  options.min_downtime = 10
-  options.auto_set     = False
-
-  if "grace_boot" in settings:
-    options.grace_boot = settings["grace_boot"]
-  if "grace_halt" in settings:
-    options.grace_halt = settings["grace_halt"]
-  if "min_downtime" in settings:
-    options.min_downtime = settings["min_downtime"]
-  if "auto_set" in settings:
-    options.auto_set = settings["auto_set"]
+  options.grace_boot   = settings["grace_boot"]
+  options.grace_halt   = settings["grace_halt"]
+  options.min_downtime = settings["min_downtime"]
+  options.auto_set     = settings["auto_set"]
 
 # --- commandline parser   --------------------------------------------------
 
