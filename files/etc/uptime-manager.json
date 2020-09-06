@@ -1,0 +1,6 @@
+{
+  "grace_boot"   :  3,
+  "grace_halt"   :  3,
+  "min_downtime" : 10,
+  "auto_set"     : true
+}
