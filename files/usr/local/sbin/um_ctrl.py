@@ -563,7 +563,7 @@ def do_set(options):
   delta     = dt_action - dt_now
   logger.msg("INFO","setting next %s at %s" % (set_type,t_action))
   hook = os.path.join(options.pgmdir,"um_set_%s" % set_type)
-  os.system("%s \"%s\" %d %d \"%s\" &" %
+  os.system("%s \"%s\" %d %d \"%s\"" %
             (hook,t_action,dt_action.timestamp(),
              delta.total_seconds(),options.db_name))
 
