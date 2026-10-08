@@ -12,7 +12,7 @@
 
 [Unit]
 Description=Uptime-Manager
-After=multi-user.target
+After=multi-user.target time-sync.target
  
 [Service]
 Type=oneshot
